@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { products, money, Product } from "@/data/products";
-import { getAdminCatalog } from "@/lib/admin-catalog";
+import { getAdminCatalog, hasAdminCatalogOverride } from "@/lib/admin-catalog";
 import { CatalogImage } from "@/components/catalog-image";
 
 type CartItem = { id: string; size: number; color?: string; qty: number };
@@ -15,6 +15,7 @@ export default function CartPage() {
   useEffect(() => {
     try { setCart(JSON.parse(localStorage.getItem("anavelle-cart") || "[]")); } catch {}
     setCatalog(getAdminCatalog());
+    if (!hasAdminCatalogOverride()) void fetch("/api/products",{cache:"no-store"}).then(r=>r.json()).then(data=>{if(Array.isArray(data.products))setCatalog(data.products as Product[]);}).catch(()=>{});
     const sync = () => setCatalog(getAdminCatalog());
     window.addEventListener("anavelle-admin-catalog-updated", sync);
     return () => window.removeEventListener("anavelle-admin-catalog-updated", sync);
