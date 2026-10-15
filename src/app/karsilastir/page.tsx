@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, GitCompareArrows, Trash2 } from "lucide-react";
 import { products, money, Product } from "@/data/products";
-import { getAdminCatalog } from "@/lib/admin-catalog";
+import { getAdminCatalog, hasAdminCatalogOverride } from "@/lib/admin-catalog";
 import { CatalogImage } from "@/components/catalog-image";
 
 export default function ComparePage() {
@@ -16,6 +16,7 @@ export default function ComparePage() {
     };
     sync();
     setCatalog(getAdminCatalog());
+    if (!hasAdminCatalogOverride()) void fetch("/api/products",{cache:"no-store"}).then(r=>r.json()).then(data=>{if(Array.isArray(data.products))setCatalog(data.products as Product[]);}).catch(()=>{});
     const syncCatalog = () => setCatalog(getAdminCatalog());
     window.addEventListener("anavelle-admin-catalog-updated", syncCatalog);
     window.addEventListener("anavelle-compare-updated", sync);
