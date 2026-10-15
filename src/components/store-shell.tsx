@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Search, UserRound, ShoppingBag, Heart, Menu, X, ChevronUp, Truck, ShieldCheck, RefreshCw, Headphones, MessageCircle, ArrowRight, GitCompareArrows } from "lucide-react";
 
@@ -12,7 +13,7 @@ const navItems = [
   { label: "OUTLET", href: "/kategori/outlet" }
 ];
 
-export function StoreShell({ children }: { children: React.ReactNode }) {
+export function StoreShell({ children }: { children: React.ReactNode }) {\n  const pathname = usePathname();
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [count, setCount] = useState(0);
