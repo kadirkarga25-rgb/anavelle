@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Heart, Truck, RefreshCw, ShieldCheck, Ruler, ChevronDown, Check, Share2, PackageCheck, BellRing, GitCompareArrows, MessageSquareText, ShoppingBag, Star, ArrowRight } from "lucide-react";
 import { products, money, Product } from "@/data/products";
-import { getAdminCatalog, resolveProductImage } from "@/lib/admin-catalog";
+import { getAdminCatalog, hasAdminCatalogOverride, resolveProductImage } from "@/lib/admin-catalog";
 import { ProductCard } from "@/components/product-card";
 
 export default function ProductDetailPage() {
@@ -17,14 +17,20 @@ export default function ProductDetailPage() {
     let active = true;
     let objectUrl = "";
     const sync = () => {
-      const found = getAdminCatalog().find(item => item.id === params.id);
-      if (!found) { setProduct(undefined); return; }
-      setProduct(found);
-      void resolveProductImage(found.image).then(src => {
-        if (!active) { if (src.startsWith("blob:")) URL.revokeObjectURL(src); return; }
-        if (src.startsWith("blob:")) objectUrl = src;
-        setDisplayImage(src || found.image);
-      });
+      const apply = (found: Product | undefined) => {
+        if (!found) { setProduct(undefined); return; }
+        setProduct(found);
+        void resolveProductImage(found.image).then(src => {
+          if (!active) { if (src.startsWith("blob:")) URL.revokeObjectURL(src); return; }
+          if (src.startsWith("blob:")) objectUrl = src;
+          setDisplayImage(src || found.image);
+        });
+      };
+      if (hasAdminCatalogOverride()) apply(getAdminCatalog().find(item => item.id === params.id));
+      else void fetch("/api/products",{cache:"no-store"}).then(r=>r.json()).then(data=>{
+        if(active && Array.isArray(data.products)) apply(data.products.find((item:Product)=>item.id===params.id) as Product | undefined);
+        else if(active) apply(getAdminCatalog().find(item=>item.id===params.id));
+      }).catch(()=>{if(active)apply(getAdminCatalog().find(item=>item.id===params.id));});
     };
     sync();
     window.addEventListener("anavelle-admin-catalog-updated", sync);
@@ -48,7 +54,7 @@ export default function ProductDetailPage() {
 
   if (!product) return <section className="section container"><h1>Ürün bulunamadı</h1><Link className="button" href="/kategori/kadin">Koleksiyona dön</Link></section>;
   const activeProduct = product;
-  const related = products.filter((item) => item.id !== activeProduct.id && (item.category === activeProduct.category || item.category === "kadin")).slice(0, 4);
+  const related = getAdminCatalog().filter((item) => item.id !== activeProduct.id && (item.category === activeProduct.category || item.category === "kadin")).slice(0, 4);
 
   function addCart(goToCart = false) {
     if (!size) { setMessage("Devam etmek için lütfen beden seç."); return; }
