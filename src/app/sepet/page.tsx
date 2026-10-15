@@ -14,6 +14,10 @@ export default function CartPage() {
   const [catalog, setCatalog] = useState<Product[]>(products);
   useEffect(() => {
     try { setCart(JSON.parse(localStorage.getItem("anavelle-cart") || "[]")); } catch {}
+    setCatalog(getAdminCatalog());
+    const sync = () => setCatalog(getAdminCatalog());
+    window.addEventListener("anavelle-admin-catalog-updated", sync);
+    return () => window.removeEventListener("anavelle-admin-catalog-updated", sync);
   }, []);
 
   function save(items: CartItem[]) {
