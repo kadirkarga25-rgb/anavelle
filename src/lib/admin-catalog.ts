@@ -7,7 +7,12 @@ const STORE_NAME = "images";
 
 export type AdminMedia = { id: string; name: string; type: string; size: number; createdAt: string; productId?: string; url?: string; storageId?: string };
 
-export function hasAdminCatalogOverride(): boolean {\n  if (typeof window === "undefined") return false;\n  return localStorage.getItem(CATALOG_KEY) !== null;\n}\n\nexport function getAdminCatalog(): Product[] {
+export function hasAdminCatalogOverride(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(CATALOG_KEY) !== null;
+}
+
+export function getAdminCatalog(): Product[] {
   if (typeof window === "undefined") return products;
   try {
     const raw = localStorage.getItem(CATALOG_KEY);
