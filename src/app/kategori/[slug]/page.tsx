@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowUpDown, CheckCircle2, SlidersHorizontal } from "lucide-react";
 import { products } from "@/data/products";
 import { ProductCard } from "@/components/product-card";
+import { AdminAwareCategoryGrid } from "@/components/admin-aware-category-grid";
 
 const labels: Record<string, string> = {
   kadin: "Kadın Koleksiyonu", sandalet: "Sandalet", terlik: "Terlik", bot: "Bot", outlet: "Outlet"
@@ -65,7 +66,7 @@ export default async function CategoryPage({ params, searchParams }: {
       <div className="category-benefits"><span><CheckCircle2 size={15}/> Seçili koleksiyon</span><span><SlidersHorizontal size={15}/> Gelişmiş filtreler</span><span>Yeni sezon seçkisi</span></div>
     </div></section>
     <section className="section container category-listing">
-      <div className="catalog-heading"><div><div className="kicker">KOLEKSİYONU KEŞFET</div><h2>{labels[slug]}</h2></div><p><strong>{items.length}</strong> ürün bulundu</p></div>
+      <div className="catalog-heading"><div><div className="kicker">KOLEKSİYONU KEŞFET</div><h2>{labels[slug]}</h2></div><p>Filtrelerini seç, koleksiyonu keşfet.</p></div>
       <div className="catalog-layout">
         <aside className="catalog-sidebar">
           <form className="filter-panel" method="get">
@@ -87,15 +88,7 @@ export default async function CategoryPage({ params, searchParams }: {
           <div className="filter-help"><strong>Karar vermekte zorlanıyor musun?</strong><p>Ürün özelliklerini ve beden seçeneklerini ürün detayında inceleyebilirsin.</p><Link href="/iletisim">Bize ulaş →</Link></div>
         </aside>
         <div className="catalog-main">
-          <form className="catalog-toolbar" method="get">
-            {Object.entries(query).filter(([key, value]) => key !== "sort" && key !== "page" && key !== "view" && Boolean(value)).map(([key, value]) => <input key={key} type="hidden" name={key} value={value}/>)}
-            <span className="catalog-result">Gösterilen <strong>{visibleItems.length}</strong> / {items.length} ürün</span>
-            <label className="sort-filter"><ArrowUpDown size={15}/><span>Sırala</span><select name="sort" defaultValue={query.sort || "featured"} aria-label="Sıralama">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-            <button className="button catalog-apply" type="submit">Uygula</button>
-          </form>
-          {visibleItems.length ? <div className={query.view === "list" ? "products catalog-products list-view" : "products catalog-products"}>{visibleItems.map((product) => <ProductCard key={product.id} product={product}/>)}</div> :
-            <div className="empty-results"><div className="kicker">SONUÇ BULUNAMADI</div><h2>Bu seçimde ürün yok.</h2><p>Filtreleri değiştirerek diğer modelleri keşfedebilirsin.</p><Link className="button" href={`/kategori/${slug}`}>Filtreleri temizle</Link></div>}
-          {pageCount > 1 && <nav className="catalog-pagination" aria-label="Sayfalar">{Array.from({length: pageCount}, (_, i) => i + 1).map((n) => <Link key={n} aria-current={page === n ? "page" : undefined} className={page === n ? "active" : ""} href={`/kategori/${slug}?${new URLSearchParams({...Object.fromEntries(Object.entries(query).filter(([k,v]) => k !== "page" && Boolean(v)) as [string,string][]), page:String(n)}).toString()}`}>{n}</Link>)}</nav>}
+          <AdminAwareCategoryGrid slug={slug} filters={query} />
           <div className="catalog-disclaimer">Önemli: Bu sayfada örnek ürün kataloğu kullanılmaktadır. Görseller, fiyatlar, değerlendirmeler, stok ve kargo bilgileri canlı satış verisi değildir; gerçek ürün verileri bağlandığında güncellenecektir.</div>
         </div>
       </div>
