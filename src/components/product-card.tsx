@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Heart, ArrowUpRight, Star, GitCompareArrows, Check, ShoppingBag, X } from "lucide-react";
 import { Product, money } from "@/data/products";
+import { getAdminCatalog, resolveProductImage } from "@/lib/admin-catalog";
 import { useEffect, useState } from "react";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -13,6 +14,9 @@ export function ProductCard({ product }: { product: Product }) {
   const [quickSize, setQuickSize] = useState<number | undefined>();
   const [quickColor, setQuickColor] = useState("");
   const [quickQty, setQuickQty] = useState(1);
+  const [displayProduct, setDisplayProduct] = useState(product);
+  const [displayImage, setDisplayImage] = useState(product.image);
+  const p = displayProduct;
 
   useEffect(() => {
     try {
