@@ -5,7 +5,7 @@ const MEDIA_KEY = "anavelle-admin-media-v1";
 const DB_NAME = "anavelle-admin-assets";
 const STORE_NAME = "images";
 
-export type AdminMedia = { id: string; name: string; type: string; size: number; createdAt: string; productId?: string; url?: string };
+export type AdminMedia = { id: string; name: string; type: string; size: number; createdAt: string; productId?: string; url?: string; storageId?: string };
 
 export function getAdminCatalog(): Product[] {
   if (typeof window === "undefined") return products;
