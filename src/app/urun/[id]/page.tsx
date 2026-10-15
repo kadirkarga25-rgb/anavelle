@@ -2,15 +2,38 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Heart, Truck, RefreshCw, ShieldCheck, Ruler, ChevronDown, Check, Share2, PackageCheck, BellRing, GitCompareArrows, MessageSquareText, ShoppingBag, Star, ArrowRight } from "lucide-react";
-import { products, money } from "@/data/products";
+import { products, money, Product } from "@/data/products";
+import { getAdminCatalog, resolveProductImage } from "@/lib/admin-catalog";
 import { ProductCard } from "@/components/product-card";
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const product = useMemo(() => products.find((item) => item.id === params.id), [params.id]);
+  const [product, setProduct] = useState<Product | undefined>(() => products.find((item) => item.id === params.id));
+  const [displayImage, setDisplayImage] = useState("");
+  useEffect(() => {
+    let active = true;
+    let objectUrl = "";
+    const sync = () => {
+      const found = getAdminCatalog().find(item => item.id === params.id);
+      if (!found) { setProduct(undefined); return; }
+      setProduct(found);
+      void resolveProductImage(found.image).then(src => {
+        if (!active) { if (src.startsWith("blob:")) URL.revokeObjectURL(src); return; }
+        if (src.startsWith("blob:")) objectUrl = src;
+        setDisplayImage(src || found.image);
+      });
+    };
+    sync();
+    window.addEventListener("anavelle-admin-catalog-updated", sync);
+    return () => {
+      active = false;
+      window.removeEventListener("anavelle-admin-catalog-updated", sync);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [params.id]);
   const [size, setSize] = useState<number | undefined>();
   const [color, setColor] = useState("");
   const [qty, setQty] = useState(1);
@@ -108,7 +131,7 @@ export default function ProductDetailPage() {
       <div className="breadcrumbs"><Link href="/">Anasayfa</Link><span>/</span><Link href={`/kategori/${activeProduct.category === "kadin" ? "kadin" : activeProduct.category}`}>{activeProduct.category === "kadin" ? "Kadın koleksiyonu" : activeProduct.category}</Link><span>/</span><span>{activeProduct.name}</span></div>
       <div className="product-detail-grid">
         <div className="product-gallery">
-          <div className="product-main-image"><img src={activeProduct.image} alt={activeProduct.name} /><span className="gallery-label">ANAVELLE · {activeProduct.id.toUpperCase()}</span></div>
+          <div className="product-main-image"><img src={displayImage || activeProduct.image} alt={activeProduct.name} /><span className="gallery-label">ANAVELLE · {activeProduct.id.toUpperCase()}</span></div>
           <div className="gallery-caption"><span>Temsili katalog görseli · Gerçek ürün fotoğrafları eklenecek.</span><button onClick={shareProduct}><Share2 size={15}/> Paylaş</button></div>
           <div className="product-image-note"><ShieldCheck size={17}/><span>Ürün fotoğrafı, malzeme ve ölçüler gerçek katalogla doğrulanmadan kesin özellik olarak değerlendirilmemelidir.</span></div>
         </div>
