@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, GitCompareArrows, Trash2 } from "lucide-react";
-import { products, money } from "@/data/products";
+import { products, money, Product } from "@/data/products";
+import { getAdminCatalog } from "@/lib/admin-catalog";
+import { CatalogImage } from "@/components/catalog-image";
 
 export default function ComparePage() {
-  const [ids, setIds] = useState<string[]>([]);
+  const [ids, setIds] = useState<string[]>([]);\n  const [catalog, setCatalog] = useState<Product[]>(products);
   useEffect(() => {
     const sync = () => {
       try { setIds(JSON.parse(localStorage.getItem("anavelle-compare") || "[]") as string[]); } catch { setIds([]); }
@@ -15,11 +17,11 @@ export default function ComparePage() {
     window.addEventListener("anavelle-compare-updated", sync);
     window.addEventListener("storage", sync);
     return () => {
-      window.removeEventListener("anavelle-compare-updated", sync);
+      window.removeEventListener("anavelle-compare-updated", sync);\n      window.removeEventListener("anavelle-admin-catalog-updated", syncCatalog);
       window.removeEventListener("storage", sync);
     };
   }, []);
-  const chosen = products.filter((product) => ids.includes(product.id));
+  const chosen = catalog.filter((product) => ids.includes(product.id));
   function remove(id: string) {
     const next = ids.filter((entry) => entry !== id);
     localStorage.setItem("anavelle-compare", JSON.stringify(next));
@@ -31,7 +33,7 @@ export default function ComparePage() {
     <div className="kicker">DAHA KOLAY KARAR VER</div><h1 className="page-heading">Ürün karşılaştırma</h1>
     <p className="muted">En fazla dört ürünü fiyat, renk, beden ve ürün özellikleri açısından yan yana incele.</p>
     {chosen.length === 0 ? <div className="empty-cart"><GitCompareArrows size={32}/><h2>Karşılaştırma listen boş.</h2><p>Ürün kartlarındaki karşılaştırma simgesini kullanarak ürün ekleyebilirsin.</p><Link className="button" href="/kategori/kadin">Ürünleri keşfet <ArrowRight size={15}/></Link></div> :
-    <div className="compare-table-wrap"><table className="compare-table"><thead><tr><th>Özellik</th>{chosen.map((p)=><th key={p.id}><img src={p.image} alt={p.name}/><Link href={`/urun/${p.id}`}>{p.name}</Link><button className="compare-remove" onClick={()=>remove(p.id)}><Trash2 size={14}/> Kaldır</button></th>)}</tr></thead><tbody>
+    <div className="compare-table-wrap"><table className="compare-table"><thead><tr><th>Özellik</th>{chosen.map((p)=><th key={p.id}><CatalogImage image={p.image} alt={p.name}/><Link href={`/urun/${p.id}`}>{p.name}</Link><button className="compare-remove" onClick={()=>remove(p.id)}><Trash2 size={14}/> Kaldır</button></th>)}</tr></thead><tbody>
       <tr><th>Fiyat</th>{chosen.map((p)=><td key={p.id}><strong>{money(p.price)}</strong>{p.oldPrice&&<del>{money(p.oldPrice)}</del>}</td>)}</tr>
       <tr><th>Renkler</th>{chosen.map((p)=><td key={p.id}>{p.colors.join(", ")}</td>)}</tr>
       <tr><th>Bedenler</th>{chosen.map((p)=><td key={p.id}>{p.sizes.join(" · ")}</td>)}</tr>
