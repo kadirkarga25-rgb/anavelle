@@ -106,7 +106,9 @@ export function ProductCard({ product }: { product: Product }) {
     } catch { setNotice("Sepet güncellenemedi."); }
   }
 
-  if (!p.inStock) return null;\n\n  const discount = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+  if (!p.inStock) return null;
+
+  const discount = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
 
   return (
     <article className="product-card">
