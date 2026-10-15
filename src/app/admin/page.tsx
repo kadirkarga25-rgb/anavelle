@@ -347,6 +347,30 @@ export default function AdminPage() {
   </div>;
 }
 
+type AdminAuthStatus = { databaseConfigured:boolean; mediaConfigured:boolean };
+function AdminAccessScreen({ready,configured,onAuthenticated}:{ready:boolean;configured:boolean;onAuthenticated:(status:AdminAuthStatus)=>void}) {
+  const [password,setPassword]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [message,setMessage]=useState("");
+  const [showPassword,setShowPassword]=useState(false);
+  async function submit(event:FormEvent<HTMLFormElement>) {
+    event.preventDefault();setBusy(true);setMessage("");
+    try {
+      const response=await fetch("/api/admin/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password})});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||"Giriş yapılamadı.");
+      const session=await fetch("/api/admin/auth/session",{cache:"no-store"}).then(r=>r.json());
+      onAuthenticated({databaseConfigured:Boolean(session.databaseConfigured),mediaConfigured:Boolean(session.mediaConfigured)});
+    } catch(e) {setMessage(e instanceof Error?e.message:"Giriş sırasında hata oluştu.");}
+    finally {setBusy(false);}
+  }
+  return <div className="admin-access-page"><div className="admin-access-card">
+    <div className="admin-access-brand"><span>A</span><div><strong>ANAVELLE</strong><small>GÜVENLİ YÖNETİM ALANI</small></div></div>
+    {!ready?<div className="admin-access-loading"><span className="admin-loading-spinner"/> Yönetim oturumu kontrol ediliyor…</div>:!configured?<><div className="admin-access-icon"><LockKeyhole size={22}/></div><div className="admin-eyebrow">İLK KURULUM GEREKLİ</div><h1>Yönetim girişini etkinleştir.</h1><p>Admin sayfası güvenlik için kilitli. Giriş yapabilmek için Netlify site ayarlarında aşağıdaki sunucu ortam değişkenlerini tanımla ve yeni dağıtımı başlat.</p><div className="admin-env-list"><code>ANAVELLE_ADMIN_PASSWORD</code><code>ANAVELLE_SESSION_SECRET</code></div><p className="admin-access-small">İsteğe bağlı kalıcı katalog ve fotoğraf depolaması için <code>SUPABASE_URL</code> ve <code>SUPABASE_SERVICE_ROLE_KEY</code> de gerekir. Gizli anahtarları asla NEXT_PUBLIC_ ile başlatma.</p><a className="admin-btn primary admin-access-link" href="https://app.netlify.com/" target="_blank" rel="noreferrer">Netlify ayarlarını aç <ExternalLink size={15}/></a><Link className="admin-access-back" href="/">Mağazaya dön</Link></>:<><div className="admin-access-icon"><LockKeyhole size={22}/></div><div className="admin-eyebrow">YÖNETİCİ GİRİŞİ</div><h1>Tekrar hoş geldin.</h1><p>Devam etmek için sunucu tarafında tanımlı yönetici şifreni gir.</p><form onSubmit={submit}><label className="admin-access-field"><span>Yönetici şifresi</span><div><input autoFocus required type={showPassword?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} autoComplete="current-password" placeholder="Şifren"/><button type="button" onClick={()=>setShowPassword(!showPassword)} aria-label={showPassword?"Şifreyi gizle":"Şifreyi göster"}>{showPassword?<EyeOff size={17}/>:<Eye size={17}/>}</button></div></label>{message&&<p className="admin-access-error" role="alert">{message}</p>}<button className="admin-btn primary admin-access-link" disabled={busy}>{busy?"Kontrol ediliyor…":"Güvenli giriş yap"} <ChevronRight size={15}/></button></form><Link className="admin-access-back" href="/">Mağazaya dön</Link></>}
+    <div className="admin-access-foot"><ShieldIcon/><span>Şifre tarayıcı koduna yazılmaz. Oturum, HTTP-only ve imzalı sunucu çereziyle korunur.</span></div>
+  </div></div>;
+}
+
 function MiniStat({icon:Icon,label,value}:{icon:typeof Package;label:string;value:string}) { return <div className="admin-mini-stat"><span><Icon size={17}/></span><div><small>{label}</small><strong>{value}</strong></div></div>; }
 
 function Overview({catalog,mediaCount,orders,onNavigate,onNew,onExport}:{catalog:Product[];mediaCount:number;orders:DemoOrder[];onNavigate:(section:Section)=>void;onNew:()=>void;onExport:()=>void}) {
