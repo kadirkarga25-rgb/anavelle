@@ -23,9 +23,20 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
   const [showTop, setShowTop] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
   const [supportMessage, setSupportMessage] = useState("");
+  const [announcement, setAnnouncement] = useState("Yeni sezonu keşfet");
 
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
+    const syncSettings = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem("anavelle-admin-settings-v1") || "{}");
+        if (typeof saved.announcement === "string" && saved.announcement.trim()) setAnnouncement(saved.announcement);
+      } catch {}
+    };
+    syncSettings();
+    if (localStorage.getItem("anavelle-admin-settings-v1") === null) {
+      void fetch("/api/storefront-settings", {cache:"no-store"}).then(r=>r.json()).then(data=>{if(typeof data.settings?.announcement==="string")setAnnouncement(data.settings.announcement);}).catch(()=>{});
+    }
     const sync = () => {
       try {
         const cart = JSON.parse(localStorage.getItem("anavelle-cart") || "[]") as { qty: number }[];
@@ -41,12 +52,14 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
       if (!sessionStorage.getItem("anavelle-news-seen")) setNewsOpen(true);
     }, 14000);
     window.addEventListener("storage", sync);
+    window.addEventListener("anavelle-admin-settings-updated", syncSettings);
     window.addEventListener("scroll", sync);
     window.addEventListener("anavelle-cart-updated", sync);
     return () => {
       window.clearTimeout(cookieTimer);
       window.clearTimeout(newsletterTimer);
       window.removeEventListener("storage", sync);
+      window.removeEventListener("anavelle-admin-settings-updated", syncSettings);
       window.removeEventListener("scroll", sync);
       window.removeEventListener("anavelle-cart-updated", sync);
     };
@@ -66,7 +79,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
   if (pathname.startsWith("/admin")) return <>{children}</>;
 
   return <>
-    <div className="topline"><span>ANAVELLE</span><i /> Zamansız tasarımlar, günlük stil <i /> Yeni sezonu keşfet</div>
+    <div className="topline"><span>ANAVELLE</span><i /> Zamansız tasarımlar, günlük stil <i /> {announcement}</div>
     <header className="header">
       <div className="container header-row">
         <button className="mobile-menu-toggle" aria-label={menuOpen ? "Menüyü kapat" : "Menüyü aç"} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={22} /> : <Menu size={22} />}</button>
