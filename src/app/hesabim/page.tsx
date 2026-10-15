@@ -1,0 +1,8 @@
+"use client";
+import { useState } from "react";
+
+export default function AccountPage() {
+ const [mode,setMode] = useState<"login"|"register">("login");
+ const [message,setMessage] = useState("");
+ return <section className="section container"><div className="layout-two"><div><div className="kicker">ANAVELLE HESABIN</div><h1 style={{fontFamily:"Georgia,serif",fontSize:42,fontWeight:400}}>Sana özel alanın.</h1><p className="muted">Siparişlerini ve tercihlerini tek yerde takip et. Hesap altyapısı henüz demo modundadır.</p></div><div className="panel"><div style={{display:"flex",gap:12}}><button className={"button "+(mode==="login"?"":"outline")} onClick={()=>{setMode("login");setMessage("")}}>Giriş yap</button><button className={"button "+(mode==="register"?"":"outline")} onClick={()=>{setMode("register");setMessage("")}}>Üye ol</button></div><form onSubmit={e=>{e.preventDefault();setMessage("Bu giriş formu demo tasarımdır; hesap sunucusu bağlanmadığı için oturum açılmadı.")}}><div className="field"><label>E-posta</label><input required type="email" placeholder="ornek@eposta.com"/></div>{mode==="register"&&<div className="field"><label>Ad soyad</label><input required placeholder="Adınız Soyadınız"/></div>}<div className="field"><label>Şifre</label><input required minLength={8} type="password" placeholder="En az 8 karakter"/></div><button className="button" type="submit">{mode==="login"?"Giriş yap":"Hesap oluştur"}</button></form>{message && <p role="status" className="muted">{message}</p>}</div></div></section>;
+}
