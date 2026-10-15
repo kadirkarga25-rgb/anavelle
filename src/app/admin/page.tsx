@@ -24,7 +24,7 @@ const sections: { id: Section; label: string; group: string; icon: typeof Layout
   { id: "content", label: "Ana sayfa içerikleri", group: "MAĞAZA", icon: Store },
   { id: "settings", label: "Mağaza ayarları", group: "SİSTEM", icon: Settings }
 ];
-const emptyProduct = (): Product => ({ id: "av-" + Math.random().toString(36).slice(2, 8), name: "", category: "sandalet", price: 0, colors: ["Siyah"], sizes: [36,37,38,39,40,41], tone: "sand", image: "", material: "", heelHeight: "", description: "", features: [], inStock: true, freeShipping: false, rating: 0, reviewCount: 0, soldCount: 0, createdAt: new Date().toISOString().slice(0,10) });
+const emptyProduct = (): Product => ({ id: "av-" + Math.random().toString(36).slice(2, 8), name: "", category: "sandalet", price: 0, colors: ["Siyah"], sizes: [36,37,38,39,40,41], tone: "sand", image: "", gallery: [], material: "", heelHeight: "", description: "", features: [], inStock: true, freeShipping: false, rating: 0, reviewCount: 0, soldCount: 0, createdAt: new Date().toISOString().slice(0,10) });
 
 export default function AdminPage() {
   const [section, setSection] = useState<Section>("overview");
@@ -169,7 +169,7 @@ export default function AdminPage() {
     } else announce("Mağaza ayarları bu tarayıcıya kaydedildi.");
   }
   function startNew() { setEditingId(null); setEditor(emptyProduct()); setError(""); }
-  function startEdit(product: Product) { setEditingId(product.id); setEditor({ ...product, colors:[...product.colors], sizes:[...product.sizes], features:[...product.features] }); setError(""); }
+  function startEdit(product: Product) { setEditingId(product.id); setEditor({ ...product, colors:[...product.colors], sizes:[...product.sizes], features:[...product.features], gallery:[...(product.gallery||[])] }); setError(""); }
   function updateEditor<K extends keyof Product>(key: K, value: Product[K]) { setEditor(prev => prev ? { ...prev, [key]: value } : prev); }
 
   function saveProduct(event: FormEvent<HTMLFormElement>) {
@@ -222,7 +222,7 @@ export default function AdminPage() {
       if (added.length) {
         saveAdminMedia(nextMedia); setMedia(nextMedia);
         if (target === "product" && editor) {
-          updateEditor("image", added[0].url || "anavelle-media:" + added[0].id);
+          const refs = added.map(item => item.url || "anavelle-media:" + item.id);\n          updateEditor("image", refs[0]);\n          updateEditor("gallery", [...(editor.gallery || []), ...refs]);
           announce("Fotoğraf optimize edilip medya kütüphanesine eklendi.");
         } else announce(added.length + " görsel medya kütüphanesine eklendi.");
       }
@@ -242,7 +242,7 @@ export default function AdminPage() {
       const next = media.filter(m=>m.id!==item.id);
       saveAdminMedia(next); setMedia(next);
       if (catalog.some(p=>p.image==="anavelle-media:"+item.id || (item.url && p.image===item.url))) {
-        const nextProducts = catalog.map(p=>(p.image==="anavelle-media:"+item.id || (item.url && p.image===item.url))?{...p,image:""}:p);
+        const matches = (image:string) => image==="anavelle-media:"+item.id || Boolean(item.url && image===item.url);\n        const nextProducts = catalog.map(p=>({...p, image:matches(p.image)?"":p.image, gallery:(p.gallery||[]).filter(image=>!matches(image))}));
         saveProducts(nextProducts,"Görsel silindi; ilişkili ürünlerin fotoğraf alanı boşaltıldı.");
       } else announce("Görsel medya kütüphanesinden silindi.");
     } catch (e) { fail(e instanceof Error ? e.message : "Görsel silinemedi."); }
@@ -310,7 +310,7 @@ export default function AdminPage() {
           <div className="admin-page-heading"><div><div className="admin-eyebrow">GÖRSEL YÖNETİMİ</div><h1>Fotoğraf & medya</h1><p>Ürün fotoğraflarını yükle, önizle, ürüne bağla ve kullanılmayan dosyaları yönet.</p></div><button className="admin-btn primary" onClick={()=>{setPhotoTarget("library");fileInput.current?.click();}}><ImagePlus size={16}/> Fotoğraf yükle</button></div>
           <div className="admin-media-summary"><div><Images size={20}/><span><strong>{media.length}</strong><small>Yüklenen görsel</small></span></div><div><Package size={20}/><span><strong>{catalog.filter(p=>p.image.startsWith("anavelle-media:")).length}</strong><small>Üründe kullanılan görsel</small></span></div><div><Upload size={20}/><span><strong>15 MB</strong><small>Tek dosya sınırı</small></span></div></div>
           <div className="admin-panel admin-media-toolbar"><label className="admin-search"><Search size={16}/><input value={mediaSearch} onChange={e=>setMediaSearch(e.target.value)} placeholder="Dosya adı ara..."/></label><span className="admin-result-count">{media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).length} dosya</span></div>
-          {media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).length===0?<div className="admin-panel admin-empty-media"><Images size={34}/><h3>Henüz medya yüklenmedi</h3><p>Ürün düzenlerken fotoğraf yükleyebilir veya buradan toplu görsel ekleyebilirsin.</p><button className="admin-btn primary" onClick={()=>{setPhotoTarget("library");fileInput.current?.click();}}><Upload size={15}/> Fotoğraf seç</button></div>:<div className="admin-media-grid">{media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map(m=><article className="admin-media-card" key={m.id}><div className="admin-media-preview">{m.url||mediaUrls[m.id]?<img src={m.url||mediaUrls[m.id]} alt={m.name}/>:<Images size={28}/>}<button title="Görseli sil" onClick={()=>void removeMedia(m)}><Trash2 size={15}/></button></div><div className="admin-media-info"><strong title={m.name}>{m.name}</strong><small>{formatBytes(m.size)} · {new Date(m.createdAt).toLocaleDateString("tr-TR")}</small><select aria-label={m.name+" görselini ürüne bağla"} defaultValue="" onChange={e=>{if(e.target.value){const p=catalog.find(p=>p.id===e.target.value);if(p)saveProducts(catalog.map(x=>x.id===p.id?{...x,image:m.url||"anavelle-media:"+m.id}:x),m.name+" ürün fotoğrafı olarak bağlandı.");e.target.value="";}}}><option value="">Ürüne bağla…</option>{catalog.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div></article>)}</div>}
+          {media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).length===0?<div className="admin-panel admin-empty-media"><Images size={34}/><h3>Henüz medya yüklenmedi</h3><p>Ürün düzenlerken fotoğraf yükleyebilir veya buradan toplu görsel ekleyebilirsin.</p><button className="admin-btn primary" onClick={()=>{setPhotoTarget("library");fileInput.current?.click();}}><Upload size={15}/> Fotoğraf seç</button></div>:<div className="admin-media-grid">{media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map(m=><article className="admin-media-card" key={m.id}><div className="admin-media-preview">{m.url||mediaUrls[m.id]?<img src={m.url||mediaUrls[m.id]} alt={m.name}/>:<Images size={28}/>}<button title="Görseli sil" onClick={()=>void removeMedia(m)}><Trash2 size={15}/></button></div><div className="admin-media-info"><strong title={m.name}>{m.name}</strong><small>{formatBytes(m.size)} · {new Date(m.createdAt).toLocaleDateString("tr-TR")}</small><select aria-label={m.name+" görselini ürüne bağla"} defaultValue="" onChange={e=>{if(e.target.value){const p=catalog.find(p=>p.id===e.target.value);if(p)saveProducts(catalog.map(x=>x.id===p.id?{...x,image:m.url||"anavelle-media:"+m.id,gallery:[...new Set([...(x.gallery||[]),m.url||"anavelle-media:"+m.id])]}:x),m.name+" ürün fotoğrafı olarak bağlandı.");e.target.value="";}}}><option value="">Ürüne bağla…</option>{catalog.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div></article>)}</div>}
           <div className="admin-info-note"><AlertTriangle size={17}/><span>Fotoğraflar bu tarayıcının IndexedDB alanında tutulur. Site sunucusuna yüklenmez ve başka cihazlardan görünmez. Canlı kullanım için kalıcı bulut medya deposu bağlanmalıdır.</span></div>
         </section>}
         {section==="categories"&&<section className="admin-section">
@@ -336,7 +336,7 @@ export default function AdminPage() {
         </section>}
       </div>
     </main>
-    <input ref={fileInput} type="file" accept="image/*" multiple={photoTarget==="library"} hidden onChange={e=>void uploadFiles(e.target.files,photoTarget)}/>
+    <input ref={fileInput} type="file" accept="image/*" multiple={true} hidden onChange={e=>void uploadFiles(e.target.files,photoTarget)}/>
     {editor&&<div className="admin-modal-backdrop" role="presentation" onClick={()=>setEditor(null)}><section className="admin-product-modal" role="dialog" aria-modal="true" aria-label={editingId?"Ürün düzenle":"Yeni ürün"} onClick={e=>e.stopPropagation()}>
       <header className="admin-modal-header"><div><div className="admin-eyebrow">{editingId?"KATALOG KAYDI":"YENİ KAYIT"}</div><h2>{editingId?"Ürünü düzenle":"Yeni ürün ekle"}</h2><p>Ürün bilgilerini ve görselini doldur.</p></div><button onClick={()=>setEditor(null)} aria-label="Pencereyi kapat"><X/></button></header>
       <form onSubmit={saveProduct} className="admin-product-form">
@@ -355,6 +355,7 @@ export default function AdminPage() {
         </div>
         <div className="admin-upload-drop"><ImagePlus size={23}/><div><strong>Ürün fotoğrafı</strong><small>JPG, PNG, WebP · en fazla 15 MB · tarayıcıda optimize edilir</small></div><button type="button" className="admin-btn secondary" disabled={busy} onClick={()=>{setPhotoTarget("product");fileInput.current?.click();}}><Upload size={14}/>{busy?"Yükleniyor…":"Fotoğraf yükle"}</button></div>
         {editor.image&&<div className="admin-image-current">{editor.image.startsWith("anavelle-media:")?<AdminMediaPreview image={editor.image} alt={editor.name}/>:<img src={editor.image} alt={editor.name}/>}<span>Seçili görsel</span><button type="button" onClick={()=>updateEditor("image","")}><Trash2 size={14}/> Kaldır</button></div>}
+        {(editor.gallery||[]).length>0&&<div className="admin-gallery-editor"><div className="admin-form-section-title">Ürün fotoğraf galerisi ({editor.gallery?.length||0})</div><div className="admin-gallery-editor-grid">{(editor.gallery||[]).map((image,index)=><div className="admin-gallery-editor-item" key={image+"-"+index}><AdminProductImage image={image} alt={editor.name+" fotoğraf "+(index+1)}/><div><small>Fotoğraf {index+1}</small><button type="button" onClick={()=>updateEditor("image",image)}>Ana fotoğraf yap</button><button type="button" onClick={()=>updateEditor("gallery",(editor.gallery||[]).filter((_,i)=>i!==index))}>Galeriden kaldır</button></div></div>)}</div></div>}
         <div className="admin-form-grid admin-form-options"><label className="admin-toggle"><input type="checkbox" checked={editor.inStock} onChange={e=>updateEditor("inStock",e.target.checked)}/><span><strong>Ürün aktif</strong><small>Katalogda görünmesi için aktif olarak işaretle</small></span></label><label className="admin-toggle"><input type="checkbox" checked={editor.freeShipping} onChange={e=>updateEditor("freeShipping",e.target.checked)}/><span><strong>Ücretsiz kargo</strong><small>Ürün kartı için kargo etiketi</small></span></label><label className="admin-field"><span>Ürün etiketi</span><input value={editor.tag||""} onChange={e=>updateEditor("tag",e.target.value||undefined)} placeholder="YENİ, FIRSAT..."/></label></div>
         {error&&<div className="admin-alert error"><AlertTriangle size={16}/><span>{error}</span></div>}
         <footer className="admin-modal-footer"><button type="button" className="admin-btn secondary" onClick={()=>setEditor(null)}>Vazgeç</button><button type="submit" className="admin-btn primary"><Save size={15}/>{editingId?"Ürünü kaydet":"Ürünü oluştur"}</button></footer>
