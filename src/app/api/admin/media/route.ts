@@ -1,3 +1,10 @@
+import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { verifyAdminSession } from "@/lib/server/admin-auth";
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET(request: NextRequest) {
   if (!verifyAdminSession(request)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
@@ -17,13 +24,6 @@ export async function GET(request: NextRequest) {
     url: url + "/storage/v1/object/public/anavelle-media/" + encodeURIComponent(row.name)
   })) }, { headers: { "Cache-Control": "no-store" } });
 }
-
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
-import { verifyAdminSession } from "@/lib/server/admin-auth";
-
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   if (!verifyAdminSession(request)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
