@@ -1,3 +1,23 @@
+export async function GET(request: NextRequest) {
+  if (!verifyAdminSession(request)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return NextResponse.json({ error: "Bulut fotoğraf deposu yapılandırılmamış." }, { status: 503 });
+  const response = await fetch(url + "/storage/v1/object/list/anavelle-media", {
+    method: "POST",
+    headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" },
+    body: JSON.stringify({ prefix: "", limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } }),
+    cache: "no-store"
+  });
+  if (!response.ok) return NextResponse.json({ error: "Bulut medya listesi alınamadı." }, { status: 502 });
+  const rows = await response.json() as {name:string;id?:string;created_at?:string;updated_at?:string;metadata?:{mimetype?:string;size?:number}}[];
+  return NextResponse.json({ media: rows.filter(row=>row.name && row.name!=="").map(row=>({
+    id: row.name, storageId: row.name, name: row.name, type: row.metadata?.mimetype || "image/*",
+    size: row.metadata?.size || 0, createdAt: row.created_at || row.updated_at || new Date().toISOString(),
+    url: url + "/storage/v1/object/public/anavelle-media/" + encodeURIComponent(row.name)
+  })) }, { headers: { "Cache-Control": "no-store" } });
+}
+
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { verifyAdminSession } from "@/lib/server/admin-auth";
