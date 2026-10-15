@@ -13,7 +13,8 @@ const navItems = [
   { label: "OUTLET", href: "/kategori/outlet" }
 ];
 
-export function StoreShell({ children }: { children: React.ReactNode }) {\n  const pathname = usePathname();
+export function StoreShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [count, setCount] = useState(0);
@@ -24,6 +25,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {\n  con
   const [supportMessage, setSupportMessage] = useState("");
 
   useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
     const sync = () => {
       try {
         const cart = JSON.parse(localStorage.getItem("anavelle-cart") || "[]") as { qty: number }[];
@@ -48,7 +50,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {\n  con
       window.removeEventListener("scroll", sync);
       window.removeEventListener("anavelle-cart-updated", sync);
     };
-  }, []);
+  }, [pathname]);
 
   function addNewsletter(email: string) {
     const clean = email.trim().toLowerCase();
@@ -60,6 +62,8 @@ export function StoreShell({ children }: { children: React.ReactNode }) {\n  con
     sessionStorage.setItem("anavelle-news-seen", "1");
     setNewsOpen(false);
   }
+
+  if (pathname.startsWith("/admin")) return <>{children}</>;
 
   return <>
     <div className="topline"><span>ANAVELLE</span><i /> Zamansız tasarımlar, günlük stil <i /> Yeni sezonu keşfet</div>
