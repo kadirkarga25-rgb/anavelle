@@ -52,6 +52,52 @@ export default function AdminPage() {
   const fileInput = useRef<HTMLInputElement>(null);
   const importInput = useRef<HTMLInputElement>(null);
   const [photoTarget, setPhotoTarget] = useState<"product"|"library">("product");
+  const [authStatus, setAuthStatus] = useState({ ready:false, authenticated:false, configured:false, databaseConfigured:false, mediaConfigured:false });
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/admin/auth/session", { cache:"no-store" }).then(r=>r.json()).then(data=>{
+      if(active)setAuthStatus({ready:true,authenticated:Boolean(data.authenticated),configured:Boolean(data.configured),databaseConfigured:Boolean(data.databaseConfigured),mediaConfigured:Boolean(data.mediaConfigured)});
+    }).catch(()=>{if(active)setAuthStatus({ready:true,authenticated:false,configured:false,databaseConfigured:false,mediaConfigured:false});});
+    return ()=>{active=false;};
+  }, []);
+
+  useEffect(() => {
+    if (!authStatus.authenticated) return;
+    let active = true;
+    async function loadServerData() {
+      if (authStatus.databaseConfigured) {
+        try {
+          const response = await fetch("/api/admin/products", { cache:"no-store" });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Ürün kataloğu sunucudan okunamadı.");
+          if (!active) return;
+          if (Array.isArray(data.products) && data.products.length) { setCatalog(data.products); saveAdminCatalog(data.products); }
+          else {
+            const seed = getAdminCatalog();
+            const write = await fetch("/api/admin/products", { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({products:seed}) });
+            if (!write.ok) throw new Error("İlk ürün kataloğu veritabanına aktarılamadı.");
+          }
+        } catch (e) { if(active) fail(e instanceof Error ? e.message : "Sunucu kataloğu yüklenemedi."); }
+        try {
+          const response = await fetch("/api/admin/settings", { cache:"no-store" });
+          const data = await response.json();
+          if (response.ok && data.settings && active) {
+            const merged = { ...defaultSettings, ...data.settings } as StoreSettings;
+            setSettings(merged); setSettingsDraft(merged); setContentDraft(merged);
+            localStorage.setItem("anavelle-admin-settings-v1", JSON.stringify(merged));
+          }
+        } catch {}
+        try {
+          const response = await fetch("/api/admin/orders", { cache:"no-store" });
+          const data = await response.json();
+          if (response.ok && Array.isArray(data.orders) && active) { setOrders(data.orders); localStorage.setItem("anavelle-admin-orders-v1",JSON.stringify(data.orders)); }
+        } catch {}
+      }
+    }
+    void loadServerData();
+    return ()=>{active=false;};
+  }, [authStatus.authenticated, authStatus.databaseConfigured]);
 
   useEffect(() => {
     const loaded = getAdminCatalog();
@@ -95,8 +141,22 @@ export default function AdminPage() {
 
   function announce(message: string) { setNotice(message); setError(""); window.setTimeout(()=>setNotice(""),5000); }
   function fail(message: string) { setError(message); setNotice(""); }
-  function saveProducts(next: Product[], message: string) { setCatalog(next); saveAdminCatalog(next); announce(message); }
-  function saveSettings(next: StoreSettings) { localStorage.setItem("anavelle-admin-settings-v1", JSON.stringify(next)); setSettings(next); setSettingsDraft(next); setContentDraft(next); announce("Mağaza ayarları bu tarayıcıya kaydedildi."); }
+  function saveProducts(next: Product[], message: string) {
+    setCatalog(next); saveAdminCatalog(next);
+    if (authStatus.authenticated && authStatus.databaseConfigured) {
+      void fetch("/api/admin/products", { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({products:next}) })
+        .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"Veritabanına kaydedilemedi.");announce(message+" Sunucuya kaydedildi.");})
+        .catch(e=>fail("Tarayıcıya kaydedildi ancak sunucuya yazılamadı: "+(e instanceof Error?e.message:"bilinmeyen hata")));
+    } else announce(message+" Bu tarayıcıya kaydedildi.");
+  }
+  function saveSettings(next: StoreSettings) {
+    localStorage.setItem("anavelle-admin-settings-v1", JSON.stringify(next)); setSettings(next); setSettingsDraft(next); setContentDraft(next);
+    if (authStatus.authenticated && authStatus.databaseConfigured) {
+      void fetch("/api/admin/settings", { method:"PUT", headers:{"Content-Type":"application/json"}, body:JSON.stringify({settings:next}) })
+        .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||"Ayarlar sunucuya kaydedilemedi.");announce("Mağaza ayarları sunucuya kaydedildi.");})
+        .catch(e=>fail("Ayarlar bu tarayıcıya kaydedildi ancak sunucuya yazılamadı: "+(e instanceof Error?e.message:"bilinmeyen hata")));
+    } else announce("Mağaza ayarları bu tarayıcıya kaydedildi.");
+  }
   function startNew() { setEditingId(null); setEditor(emptyProduct()); setError(""); }
   function startEdit(product: Product) { setEditingId(product.id); setEditor({ ...product, colors:[...product.colors], sizes:[...product.sizes], features:[...product.features] }); setError(""); }
   function updateEditor<K extends keyof Product>(key: K, value: Product[K]) { setEditor(prev => prev ? { ...prev, [key]: value } : prev); }
@@ -135,13 +195,22 @@ export default function AdminPage() {
           if (optimized) blob = optimized;
         } catch {}
         await saveMediaBlob(id, blob);
-        const record: AdminMedia = { id, name:file.name, type:blob.type || file.type, size:blob.size, createdAt:new Date().toISOString() };
+        let publicUrl = "";
+        if (authStatus.authenticated && authStatus.mediaConfigured) {
+          const form = new FormData();
+          form.append("file", blob, file.name.replace(/[^a-zA-Z0-9._-]/g,"-"));
+          const response = await fetch("/api/admin/media", { method:"POST", body:form });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Fotoğraf buluta yüklenemedi.");
+          publicUrl = String(data.publicUrl || "");
+        }
+        const record: AdminMedia = { id, name:file.name, type:blob.type || file.type, size:blob.size, createdAt:new Date().toISOString(), ...(publicUrl ? {url:publicUrl} : {}) };
         nextMedia.unshift(record); added.push(record);
       }
       if (added.length) {
         saveAdminMedia(nextMedia); setMedia(nextMedia);
         if (target === "product" && editor) {
-          updateEditor("image", "anavelle-media:" + added[0].id);
+          updateEditor("image", added[0].url || "anavelle-media:" + added[0].id);
           announce("Fotoğraf optimize edilip medya kütüphanesine eklendi.");
         } else announce(added.length + " görsel medya kütüphanesine eklendi.");
       }
@@ -200,6 +269,7 @@ export default function AdminPage() {
 
   const currentSection = sections.find(item=>item.id===section)!;
   const filteredOrders = orders.filter(o => (orderFilter === "all" || o.status === orderFilter) && (!query || [o.id, o.customer, o.email].some(v => v.toLowerCase().includes(query.toLowerCase()))));
+  if (!authStatus.ready || !authStatus.authenticated) return <AdminAccessScreen ready={authStatus.ready} configured={authStatus.configured} onAuthenticated={(status)=>setAuthStatus({ready:true,authenticated:true,configured:true,databaseConfigured:status.databaseConfigured,mediaConfigured:status.mediaConfigured})} />;
   return <div className="admin-app">
     <aside className={mobileNav?"admin-sidebar mobile-open":"admin-sidebar"}>
       <div className="admin-brand"><span className="admin-brand-mark">A</span><div><strong>ANAVELLE</strong><small>MAĞAZA YÖNETİMİ</small></div><button className="admin-mobile-close" onClick={()=>setMobileNav(false)} aria-label="Menüyü kapat"><X size={18}/></button></div>
@@ -209,7 +279,7 @@ export default function AdminPage() {
     </aside>
     {mobileNav&&<button className="admin-mobile-overlay" onClick={()=>setMobileNav(false)} aria-label="Menüyü kapat"/>}
     <main className="admin-main">
-      <header className="admin-topbar"><button className="admin-mobile-toggle" onClick={()=>setMobileNav(true)} aria-label="Menüyü aç"><Menu/></button><div className="admin-top-crumb"><span>ANAVELLE</span><ChevronRight size={14}/><strong>{currentSection.label}</strong></div><div className="admin-top-actions"><span className="admin-status-pill"><span/> DEMO ORTAMI</span><Link href="/" target="_blank"><ExternalLink size={15}/> Mağazayı görüntüle</Link></div></header>
+      <header className="admin-topbar"><button className="admin-mobile-toggle" onClick={()=>setMobileNav(true)} aria-label="Menüyü aç"><Menu/></button><div className="admin-top-crumb"><span>ANAVELLE</span><ChevronRight size={14}/><strong>{currentSection.label}</strong></div><div className="admin-top-actions"><span className="admin-status-pill"><span/> {authStatus.databaseConfigured ? "CANLI VERİTABANI" : "DEMO ORTAMI"}</span><button className="admin-logout" onClick={()=>void fetch("/api/admin/auth/logout",{method:"POST"}).then(()=>setAuthStatus({...authStatus,authenticated:false}))}>Çıkış yap</button><Link href="/" target="_blank"><ExternalLink size={15}/> Mağazayı görüntüle</Link></div></header>
       <div className="admin-content">
         {(notice||error)&&<div className={error?"admin-alert error":"admin-alert success"} role="status">{error?<AlertTriangle size={17}/>:<Check size={17}/>}<span>{error||notice}</span><button onClick={()=>{setNotice("");setError("");}} aria-label="Bildirimi kapat"><X size={15}/></button></div>}
         {section==="overview"&&<Overview catalog={catalog} mediaCount={media.length} orders={orders} onNavigate={setSection} onNew={startNew} onExport={exportAll}/>}
@@ -223,7 +293,7 @@ export default function AdminPage() {
           <div className="admin-page-heading"><div><div className="admin-eyebrow">GÖRSEL YÖNETİMİ</div><h1>Fotoğraf & medya</h1><p>Ürün fotoğraflarını yükle, önizle, ürüne bağla ve kullanılmayan dosyaları yönet.</p></div><button className="admin-btn primary" onClick={()=>{setPhotoTarget("library");fileInput.current?.click();}}><ImagePlus size={16}/> Fotoğraf yükle</button></div>
           <div className="admin-media-summary"><div><Images size={20}/><span><strong>{media.length}</strong><small>Yüklenen görsel</small></span></div><div><Package size={20}/><span><strong>{catalog.filter(p=>p.image.startsWith("anavelle-media:")).length}</strong><small>Üründe kullanılan görsel</small></span></div><div><Upload size={20}/><span><strong>15 MB</strong><small>Tek dosya sınırı</small></span></div></div>
           <div className="admin-panel admin-media-toolbar"><label className="admin-search"><Search size={16}/><input value={mediaSearch} onChange={e=>setMediaSearch(e.target.value)} placeholder="Dosya adı ara..."/></label><span className="admin-result-count">{media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).length} dosya</span></div>
-          {media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).length===0?<div className="admin-panel admin-empty-media"><Images size={34}/><h3>Henüz medya yüklenmedi</h3><p>Ürün düzenlerken fotoğraf yükleyebilir veya buradan toplu görsel ekleyebilirsin.</p><button className="admin-btn primary" onClick={()=>{setPhotoTarget("library");fileInput.current?.click();}}><Upload size={15}/> Fotoğraf seç</button></div>:<div className="admin-media-grid">{media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map(m=><article className="admin-media-card" key={m.id}><div className="admin-media-preview">{mediaUrls[m.id]?<img src={mediaUrls[m.id]} alt={m.name}/>:<Images size={28}/>}<button title="Görseli sil" onClick={()=>void removeMedia(m)}><Trash2 size={15}/></button></div><div className="admin-media-info"><strong title={m.name}>{m.name}</strong><small>{formatBytes(m.size)} · {new Date(m.createdAt).toLocaleDateString("tr-TR")}</small><select aria-label={m.name+" görselini ürüne bağla"} defaultValue="" onChange={e=>{if(e.target.value){const p=catalog.find(p=>p.id===e.target.value);if(p)saveProducts(catalog.map(x=>x.id===p.id?{...x,image:"anavelle-media:"+m.id}:x),m.name+" ürün fotoğrafı olarak bağlandı.");e.target.value="";}}}><option value="">Ürüne bağla…</option>{catalog.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div></article>)}</div>}
+          {media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).length===0?<div className="admin-panel admin-empty-media"><Images size={34}/><h3>Henüz medya yüklenmedi</h3><p>Ürün düzenlerken fotoğraf yükleyebilir veya buradan toplu görsel ekleyebilirsin.</p><button className="admin-btn primary" onClick={()=>{setPhotoTarget("library");fileInput.current?.click();}}><Upload size={15}/> Fotoğraf seç</button></div>:<div className="admin-media-grid">{media.filter(m=>m.name.toLowerCase().includes(mediaSearch.toLowerCase())).map(m=><article className="admin-media-card" key={m.id}><div className="admin-media-preview">{m.url||mediaUrls[m.id]?<img src={m.url||mediaUrls[m.id]} alt={m.name}/>:<Images size={28}/>}<button title="Görseli sil" onClick={()=>void removeMedia(m)}><Trash2 size={15}/></button></div><div className="admin-media-info"><strong title={m.name}>{m.name}</strong><small>{formatBytes(m.size)} · {new Date(m.createdAt).toLocaleDateString("tr-TR")}</small><select aria-label={m.name+" görselini ürüne bağla"} defaultValue="" onChange={e=>{if(e.target.value){const p=catalog.find(p=>p.id===e.target.value);if(p)saveProducts(catalog.map(x=>x.id===p.id?{...x,image:m.url||"anavelle-media:"+m.id}:x),m.name+" ürün fotoğrafı olarak bağlandı.");e.target.value="";}}}><option value="">Ürüne bağla…</option>{catalog.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div></article>)}</div>}
           <div className="admin-info-note"><AlertTriangle size={17}/><span>Fotoğraflar bu tarayıcının IndexedDB alanında tutulur. Site sunucusuna yüklenmez ve başka cihazlardan görünmez. Canlı kullanım için kalıcı bulut medya deposu bağlanmalıdır.</span></div>
         </section>}
         {section==="categories"&&<section className="admin-section">
