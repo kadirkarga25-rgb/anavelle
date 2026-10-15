@@ -66,6 +66,17 @@ export default function AdminPage() {
     if (!authStatus.authenticated) return;
     let active = true;
     async function loadServerData() {
+      if (authStatus.mediaConfigured) {
+        try {
+          const response = await fetch("/api/admin/media", {cache:"no-store"});
+          const data = await response.json();
+          if (response.ok && Array.isArray(data.media) && active) {
+            const remoteMedia = data.media as AdminMedia[];
+            const mergedMedia = [...remoteMedia, ...getAdminMedia().filter(local => !remoteMedia.some(remote => remote.storageId && remote.storageId === local.storageId))];
+            setMedia(mergedMedia); saveAdminMedia(mergedMedia);
+          }
+        } catch {}
+      }
       if (authStatus.databaseConfigured) {
         try {
           const response = await fetch("/api/admin/products", { cache:"no-store" });
@@ -203,8 +214,9 @@ export default function AdminPage() {
           const data = await response.json();
           if (!response.ok) throw new Error(data.error || "Fotoğraf buluta yüklenemedi.");
           publicUrl = String(data.publicUrl || "");
+          if (data.id) (file as File & {__anavelleStorageId?:string}).__anavelleStorageId = String(data.id);
         }
-        const record: AdminMedia = { id, name:file.name, type:blob.type || file.type, size:blob.size, createdAt:new Date().toISOString(), ...(publicUrl ? {url:publicUrl} : {}) };
+        const record: AdminMedia = { id, name:file.name, type:blob.type || file.type, size:blob.size, createdAt:new Date().toISOString(), ...(publicUrl ? {url:publicUrl, storageId:(file as File & {__anavelleStorageId?:string}).__anavelleStorageId} : {}) };
         nextMedia.unshift(record); added.push(record);
       }
       if (added.length) {
@@ -221,6 +233,11 @@ export default function AdminPage() {
   async function removeMedia(item: AdminMedia) {
     if (!window.confirm(item.name + " görselini silmek istediğine emin misin? Bu fotoğrafı kullanan ürünler görselini kaybedebilir.")) return;
     try {
+      if (item.url && authStatus.mediaConfigured) {
+        const response = await fetch("/api/admin/media", { method:"DELETE", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id:item.storageId || item.url.split("/").pop()}) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Bulut görseli silinemedi.");
+      }
       await deleteMediaBlob(item.id);
       const next = media.filter(m=>m.id!==item.id);
       saveAdminMedia(next); setMedia(next);
