@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CreditCard, LockKeyhole, PackageCheck, Truck } from "lucide-react";
-import { products, money } from "@/data/products";
+import { products, money, Product } from "@/data/products";
+import { getAdminCatalog } from "@/lib/admin-catalog";
+import { CatalogImage } from "@/components/catalog-image";
 
 type CartItem = { id: string; size: number; color?: string; qty: number };
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [catalog, setCatalog] = useState<Product[]>(products);
   const [payment, setPayment] = useState("card");
   const [delivery, setDelivery] = useState("standard");
   const [message, setMessage] = useState("");
@@ -17,7 +20,7 @@ export default function CheckoutPage() {
     try { setCart(JSON.parse(localStorage.getItem("anavelle-cart") || "[]") as CartItem[]); } catch { setCart([]); }
   }, []);
   const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
-  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + (products.find((p) => p.id === item.id)?.price || 0) * item.qty, 0), [cart]);
+  const subtotal = useMemo(() => cart.reduce((sum, item) => sum + (catalog.find((p) => p.id === item.id)?.price || 0) * item.qty, 0), [cart, catalog]);
   const shipping = delivery === "standard" ? 0 : 0;
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -50,7 +53,7 @@ export default function CheckoutPage() {
         <Link href="/sepet" className="checkout-back"><ArrowLeft size={14}/> Sepete dön</Link>
       </form>
       <aside className="checkout-summary"><div className="kicker">SİPARİŞ ÖZETİ</div><h2>Sepetin ({itemCount})</h2>
-        <div className="checkout-items">{cart.map((item)=>{const p=products.find((product)=>product.id===item.id);if(!p)return null;return <div className="checkout-item" key={item.id+"-"+item.size+"-"+item.color}><img src={p.image} alt={p.name}/><div><strong>{p.name}</strong><small>Beden {item.size}{item.color?" · "+item.color:""} · {item.qty} adet</small><b>{money(p.price*item.qty)}</b></div></div>})}</div>
+        <div className="checkout-items">{cart.map((item)=>{const p=catalog.find((product)=>product.id===item.id);if(!p)return null;return <div className="checkout-item" key={item.id+"-"+item.size+"-"+item.color}><CatalogImage image={p.image} alt={p.name}/><div><strong>{p.name}</strong><small>Beden {item.size}{item.color?" · "+item.color:""} · {item.qty} adet</small><b>{money(p.price*item.qty)}</b></div></div>})}</div>
         <div className="summary-line"><span>Ürünler</span><strong>{money(subtotal)}</strong></div><div className="summary-line"><span>Kargo</span><strong>{shipping===0?"Belirlenecek":money(shipping)}</strong></div><div className="summary-total"><span>Genel toplam</span><strong>{money(subtotal+shipping)}</strong></div>
         <div className="checkout-security"><LockKeyhole size={17}/><span>Ödeme sağlayıcısı ve güvenli sipariş altyapısı etkin değil. Kart bilgisi girme veya ödeme yapma.</span></div>
       </aside>
