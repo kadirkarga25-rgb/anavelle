@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Check, Heart, Leaf, PackageCheck, ShieldCheck, Sparkles } from "lucide-react";
 import { products } from "@/data/products";
 import { ProductCard } from "@/components/product-card";
+import { StorefrontHero } from "@/components/storefront-hero";
 
 const collections = [
   { title: "Sandalet", eyebrow: "HAFİF ADIMLAR", href: "/kategori/sandalet", image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=900&q=85" },
@@ -12,25 +13,7 @@ const collections = [
 
 export default function HomePage() {
   return <>
-    <section className="hero-wrap">
-      <div className="hero">
-        <div className="hero-copy">
-          <div className="hero-eyebrow"><span /> ANAVELLE · YENİ SEZON</div>
-          <h1>Her adımda<br /><em>daha iyi</em> bir sen.</h1>
-          <p>Zamansız çizgiler, özenli detaylar ve kendi ritmine uyum sağlayan bir stil. Günlük hayatına eşlik edecek favorini keşfet.</p>
-          <div className="hero-actions">
-            <Link className="button" href="/kategori/kadin">Koleksiyonu keşfet <ArrowRight size={16} /></Link>
-            <Link className="text-link" href="/kategori/outlet">Fırsatları gör <ArrowUpRight size={15} /></Link>
-          </div>
-          <div className="hero-note"><Sparkles size={15} /> Her adımda zarafet, her gün kendin.</div>
-        </div>
-        <div className="hero-visual">
-          <img src="https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=1400&q=90" alt="Anavelle yeni sezon ayakkabı stil görseli" fetchPriority="high" />
-          <div className="hero-stamp"><span>ANAVELLE</span><small>TIMELESS COMFORT</small></div>
-          <div className="hero-caption"><span>01 / 04</span><span>Yeni sezon seçkisi</span></div>
-        </div>
-      </div>
-    </section>
+    <StorefrontHero />
 
     <section className="trust-strip container" aria-label="Alışveriş özellikleri">
       <div><PackageCheck /><span><strong>Özenli seçim</strong><small>Her detayda sadelik</small></span></div>
