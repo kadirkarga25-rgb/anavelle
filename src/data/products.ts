@@ -9,7 +9,8 @@ export type Product = {
   sizes: number[];
   tone: string;
   description: string;
-  image: string;\n  gallery?: string[];
+  image: string;
+  gallery?: string[];
   material: string;
   heelHeight: string;
   features: string[];
