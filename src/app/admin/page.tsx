@@ -241,8 +241,8 @@ export default function AdminPage() {
       await deleteMediaBlob(item.id);
       const next = media.filter(m=>m.id!==item.id);
       saveAdminMedia(next); setMedia(next);
-      if (catalog.some(p=>p.image==="anavelle-media:"+item.id)) {
-        const nextProducts = catalog.map(p=>p.image==="anavelle-media:"+item.id?{...p,image:""}:p);
+      if (catalog.some(p=>p.image==="anavelle-media:"+item.id || (item.url && p.image===item.url))) {
+        const nextProducts = catalog.map(p=>(p.image==="anavelle-media:"+item.id || (item.url && p.image===item.url))?{...p,image:""}:p);
         saveProducts(nextProducts,"Görsel silindi; ilişkili ürünlerin fotoğraf alanı boşaltıldı.");
       } else announce("Görsel medya kütüphanesinden silindi.");
     } catch (e) { fail(e instanceof Error ? e.message : "Görsel silinemedi."); }
