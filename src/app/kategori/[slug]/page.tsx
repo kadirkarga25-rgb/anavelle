@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowUpDown, CheckCircle2, SlidersHorizontal } from "lucide-react";
 import { products } from "@/data/products";
 import { ProductCard } from "@/components/product-card";
@@ -26,7 +25,7 @@ export default async function CategoryPage({ params, searchParams }: {
 }) {
   const { slug } = await params;
   const query = await searchParams;
-  if (!labels[slug]) notFound();
+  const categoryTitle = labels[slug] || slug.split("-").map(part => part.charAt(0).toLocaleUpperCase("tr-TR") + part.slice(1)).join(" ");
 
   let items = slug === "outlet" ? products.filter((product) => product.oldPrice) :
     slug === "kadin" ? products : products.filter((product) => product.category === slug);
@@ -60,13 +59,13 @@ export default async function CategoryPage({ params, searchParams }: {
 
   return <>
     <section className="category-hero"><div className="container">
-      <div className="breadcrumbs"><Link href="/">Anasayfa</Link><span>/</span><span>{labels[slug]}</span></div>
-      <div className="kicker">ANAVELLE KOLEKSİYONU</div><h1>{labels[slug]}</h1>
+      <div className="breadcrumbs"><Link href="/">Anasayfa</Link><span>/</span><span>{categoryTitle}</span></div>
+      <div className="kicker">ANAVELLE KOLEKSİYONU</div><h1>{categoryTitle}</h1>
       <p>Zamansız çizgiler, özenli detaylar ve günlük stil için seçilmiş tasarımlar.</p>
       <div className="category-benefits"><span><CheckCircle2 size={15}/> Seçili koleksiyon</span><span><SlidersHorizontal size={15}/> Gelişmiş filtreler</span><span>Yeni sezon seçkisi</span></div>
     </div></section>
     <section className="section container category-listing">
-      <div className="catalog-heading"><div><div className="kicker">KOLEKSİYONU KEŞFET</div><h2>{labels[slug]}</h2></div><p>Filtrelerini seç, koleksiyonu keşfet.</p></div>
+      <div className="catalog-heading"><div><div className="kicker">KOLEKSİYONU KEŞFET</div><h2>{categoryTitle}</h2></div><p>Filtrelerini seç, koleksiyonu keşfet.</p></div>
       <div className="catalog-layout">
         <aside className="catalog-sidebar">
           <form className="filter-panel" method="get">
