@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Product } from "@/data/products";
-import { getAdminCatalog } from "@/lib/admin-catalog";
+import { getAdminCatalog, hasAdminCatalogOverride } from "@/lib/admin-catalog";
 import { ProductCard } from "@/components/product-card";
 
 type Filters = { q?:string; sort?:string; min?:string; max?:string; color?:string; size?:string; sale?:string; inStock?:string; freeShipping?:string; feature?:string; page?:string; view?:string };
@@ -15,6 +15,9 @@ export function AdminAwareCategoryGrid({slug,filters}:{slug:string;filters:Filte
   useEffect(()=>{
     const sync=()=>setCatalog(getAdminCatalog());
     sync();
+    if (!hasAdminCatalogOverride()) {
+      void fetch("/api/products",{cache:"no-store"}).then(r=>r.json()).then(data=>{if(Array.isArray(data.products))setCatalog(data.products as Product[]);}).catch(()=>{});
+    }
     window.addEventListener("anavelle-admin-catalog-updated",sync);
     return ()=>window.removeEventListener("anavelle-admin-catalog-updated",sync);
   },[]);
