@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Package, Images, ShoppingCart, Tags, Settings, Search, Plus, Pencil, Trash2,
   Copy, Upload, Download, Eye, EyeOff, ImagePlus, X, Check, AlertTriangle, ExternalLink,
   Menu, PanelLeftClose, PackageCheck, Truck, CreditCard, Store, Save, RefreshCw, FileUp, FileDown,
-  CircleDollarSign, Boxes, Activity, ArrowUpRight, ChevronRight, SearchCheck, ClipboardList, SlidersHorizontal
+  LockKeyhole, CircleDollarSign, Boxes, Activity, ArrowUpRight, ChevronRight, SearchCheck, ClipboardList, SlidersHorizontal
 } from "lucide-react";
 
 type Section = "overview" | "products" | "media" | "orders" | "categories" | "content" | "settings";
