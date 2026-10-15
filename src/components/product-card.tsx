@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, ArrowUpRight, Star, GitCompareArrows, Check } from "lucide-react";
+import { Heart, ArrowUpRight, Star, GitCompareArrows, Check, ShoppingBag, X } from "lucide-react";
 import { Product, money } from "@/data/products";
 import { useEffect, useState } from "react";
 
@@ -9,6 +9,10 @@ export function ProductCard({ product }: { product: Product }) {
   const [fav, setFav] = useState(false);
   const [compared, setCompared] = useState(false);
   const [notice, setNotice] = useState("");
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickSize, setQuickSize] = useState<number | undefined>();
+  const [quickColor, setQuickColor] = useState("");
+  const [quickQty, setQuickQty] = useState(1);
 
   useEffect(() => {
     try {
@@ -62,6 +66,20 @@ export function ProductCard({ product }: { product: Product }) {
     } catch { setNotice("Karşılaştırma listesi güncellenemedi."); }
   }
 
+  function quickAdd() {
+    if (!quickSize || !quickColor) { setNotice("Hızlı sepete eklemek için beden ve renk seç."); return; }
+    try {
+      const cart = JSON.parse(localStorage.getItem("anavelle-cart") || "[]") as { id: string; size: number; color?: string; qty: number }[];
+      const existing = cart.find((item) => item.id === product.id && item.size === quickSize && item.color === quickColor);
+      if (existing) existing.qty += quickQty;
+      else cart.push({ id: product.id, size: quickSize, color: quickColor, qty: quickQty });
+      localStorage.setItem("anavelle-cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("anavelle-cart-updated"));
+      setQuickOpen(false);
+      setNotice("Ürün demo sepetine eklendi.");
+    } catch { setNotice("Sepet güncellenemedi."); }
+  }
+
   const discount = product.oldPrice ? Math.round((1 - product.price / product.oldPrice) * 100) : 0;
 
   return (
@@ -93,8 +111,21 @@ export function ProductCard({ product }: { product: Product }) {
           {product.oldPrice && <span className="old-price">{money(product.oldPrice)}</span>}
         </div>
         <div className="product-card-bottom"><span>{product.inStock ? "Stok durumu: örnek" : "Stok bilgisi yok"}</span><Link href="/karsilastir">Karşılaştır <ArrowUpRight size={12}/></Link></div>
+        <button className="product-quick-add" onClick={() => { setQuickSize(undefined); setQuickColor(""); setQuickQty(1); setQuickOpen(true); }}><ShoppingBag size={15}/> Sepete ekle</button>
         {notice && <p className="product-card-notice" role="status">{notice}</p>}
       </div>
+      {quickOpen && <div className="modal-backdrop quick-add-backdrop" role="presentation" onClick={() => setQuickOpen(false)}>
+        <section className="quick-add-modal" role="dialog" aria-modal="true" aria-label={product.name + " hızlı sepete ekle"} onClick={(event) => event.stopPropagation()}>
+          <button className="modal-close" onClick={() => setQuickOpen(false)} aria-label="Kapat"><X size={18}/></button>
+          <div className="quick-add-product"><img src={product.image} alt={product.name}/><div><div className="kicker">HIZLI SEPET</div><h3>{product.name}</h3><strong>{money(product.price)}</strong></div></div>
+          <div className="field"><label>Renk seç</label><select value={quickColor} onChange={(event) => setQuickColor(event.target.value)}><option value="">Renk seçiniz</option>{product.colors.map((color) => <option key={color} value={color}>{color}</option>)}</select></div>
+          <div className="field"><label>Beden seç</label><div className="size-options">{product.sizes.map((size) => <button type="button" key={size} className={quickSize === size ? "size-option selected" : "size-option"} onClick={() => setQuickSize(size)}>{size}</button>)}</div></div>
+          <div className="field"><label>Adet</label><select value={quickQty} onChange={(event) => setQuickQty(Number(event.target.value))}>{[1,2,3,4,5].map((qty) => <option key={qty} value={qty}>{qty}</option>)}</select></div>
+          <button className="button" onClick={quickAdd}>Sepete ekle · {money(product.price * quickQty)}</button>
+          <Link className="quick-add-detail-link" href={"/urun/" + product.id}>Tüm ürün detaylarını gör</Link>
+          <p className="catalog-disclaimer">Demo katalog: bu işlem gerçek sipariş oluşturmaz.</p>
+        </section>
+      </div>}
     </article>
   );
 }
