@@ -70,7 +70,8 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
         <div className="actions">
           <form className="header-search" action="/arama"><input className="search" aria-label="Ürün ara" name="q" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ürün ara..." /><button aria-label="Ara" type="submit"><Search size={18} /></button></form>
           <Link aria-label="Hesabım" href="/hesabim"><UserRound size={19} /></Link>
-          <Link aria-label="Favorilerim" href="/favoriler"><Heart size={19} /></Link>\n          <Link aria-label="Ürün karşılaştırma" href="/karsilastir"><GitCompareArrows size={18} /></Link>
+          <Link aria-label="Favorilerim" href="/favoriler"><Heart size={19} /></Link>
+          <Link aria-label="Ürün karşılaştırma" href="/karsilastir"><GitCompareArrows size={18} /></Link>
           <Link className="cart-link" aria-label="Sepetim" href="/sepet"><ShoppingBag size={19} /><span>{count}</span></Link>
         </div>
       </div>
