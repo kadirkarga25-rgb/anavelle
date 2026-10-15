@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Heart, ArrowUpRight, Star, GitCompareArrows, Check, ShoppingBag, X } from "lucide-react";
 import { Product, money } from "@/data/products";
-import { getAdminCatalog, resolveProductImage } from "@/lib/admin-catalog";
+import { getAdminCatalog, hasAdminCatalogOverride, resolveProductImage } from "@/lib/admin-catalog";
 import { useEffect, useState } from "react";
 
 export function ProductCard({ product }: { product: Product }) {
@@ -22,14 +22,22 @@ export function ProductCard({ product }: { product: Product }) {
     let active = true;
     let objectUrl = "";
     const syncProduct = () => {
+      const localOverride = hasAdminCatalogOverride();
       const found = getAdminCatalog().find(item => item.id === product.id);
-      if (!found) return;
-      setDisplayProduct(found);
-      void resolveProductImage(found.image).then(src => {
-        if (!active) { if (src.startsWith("blob:")) URL.revokeObjectURL(src); return; }
-        if (src.startsWith("blob:")) objectUrl = src;
-        setDisplayImage(src || found.image);
-      });
+      const apply = (item: Product | undefined) => {
+        if (!item) { setDisplayProduct({ ...product, inStock:false }); return; }
+        setDisplayProduct(item);
+        void resolveProductImage(item.image).then(src => {
+          if (!active) { if (src.startsWith("blob:")) URL.revokeObjectURL(src); return; }
+          if (src.startsWith("blob:")) objectUrl = src;
+          setDisplayImage(src || item.image);
+        });
+      };
+      if (localOverride) apply(found);
+      else void fetch("/api/products", {cache:"no-store"}).then(r=>r.json()).then(data=>{
+        if (active && Array.isArray(data.products)) apply(data.products.find((item:Product)=>item.id===product.id) as Product | undefined);
+        else if (active) apply(found);
+      }).catch(()=>{if(active)apply(found);});
     };
     const sync = () => {
       try {
@@ -98,7 +106,7 @@ export function ProductCard({ product }: { product: Product }) {
     } catch { setNotice("Sepet güncellenemedi."); }
   }
 
-  const discount = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+  if (!p.inStock) return null;\n\n  const discount = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
 
   return (
     <article className="product-card">
