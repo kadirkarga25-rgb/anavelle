@@ -222,7 +222,9 @@ export default function AdminPage() {
       if (added.length) {
         saveAdminMedia(nextMedia); setMedia(nextMedia);
         if (target === "product" && editor) {
-          const refs = added.map(item => item.url || "anavelle-media:" + item.id);\n          updateEditor("image", refs[0]);\n          updateEditor("gallery", [...(editor.gallery || []), ...refs]);
+          const refs = added.map(item => item.url || "anavelle-media:" + item.id);
+          updateEditor("image", refs[0]);
+          updateEditor("gallery", [...(editor.gallery || []), ...refs]);
           announce("Fotoğraf optimize edilip medya kütüphanesine eklendi.");
         } else announce(added.length + " görsel medya kütüphanesine eklendi.");
       }
@@ -242,7 +244,8 @@ export default function AdminPage() {
       const next = media.filter(m=>m.id!==item.id);
       saveAdminMedia(next); setMedia(next);
       if (catalog.some(p=>p.image==="anavelle-media:"+item.id || (item.url && p.image===item.url))) {
-        const matches = (image:string) => image==="anavelle-media:"+item.id || Boolean(item.url && image===item.url);\n        const nextProducts = catalog.map(p=>({...p, image:matches(p.image)?"":p.image, gallery:(p.gallery||[]).filter(image=>!matches(image))}));
+        const matches = (image:string) => image==="anavelle-media:"+item.id || Boolean(item.url && image===item.url);
+        const nextProducts = catalog.map(p=>({...p, image:matches(p.image)?"":p.image, gallery:(p.gallery||[]).filter(image=>!matches(image))}));
         saveProducts(nextProducts,"Görsel silindi; ilişkili ürünlerin fotoğraf alanı boşaltıldı.");
       } else announce("Görsel medya kütüphanesinden silindi.");
     } catch (e) { fail(e instanceof Error ? e.message : "Görsel silinemedi."); }
