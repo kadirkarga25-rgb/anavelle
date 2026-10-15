@@ -18,6 +18,10 @@ export default function CheckoutPage() {
   const [terms, setTerms] = useState(false);
   useEffect(() => {
     try { setCart(JSON.parse(localStorage.getItem("anavelle-cart") || "[]") as CartItem[]); } catch { setCart([]); }
+    setCatalog(getAdminCatalog());
+    const syncCatalog = () => setCatalog(getAdminCatalog());
+    window.addEventListener("anavelle-admin-catalog-updated", syncCatalog);
+    return () => window.removeEventListener("anavelle-admin-catalog-updated", syncCatalog);
   }, []);
   const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + (catalog.find((p) => p.id === item.id)?.price || 0) * item.qty, 0), [cart, catalog]);
