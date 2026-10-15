@@ -24,3 +24,21 @@ export async function POST(request: NextRequest) {
   if (!response.ok) return NextResponse.json({ error: "Fotoğraf buluta yüklenemedi: " + (await response.text()).slice(0,250) }, { status: 502 });
   return NextResponse.json({ id: path, name: file.name, size: file.size, type: file.type, publicUrl: url + "/storage/v1/object/public/anavelle-media/" + path });
 }
+
+export async function DELETE(request: NextRequest) {
+  if (!verifyAdminSession(request)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return NextResponse.json({ error: "Bulut fotoğraf deposu yapılandırılmamış." }, { status: 503 });
+  let body: { id?: string };
+  try { body = await request.json() as { id?: string }; } catch { return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 }); }
+  const id = typeof body.id === "string" ? body.id : "";
+  if (!id || id.includes("/") || id.includes("..") || !/^[a-zA-Z0-9._-]+$/.test(id)) return NextResponse.json({ error: "Geçersiz görsel kimliği." }, { status: 400 });
+  const response = await fetch(url + "/storage/v1/object/anavelle-media", {
+    method: "DELETE",
+    headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" },
+    body: JSON.stringify({ prefixes: [id] })
+  });
+  if (!response.ok) return NextResponse.json({ error: "Bulut görseli silinemedi: " + (await response.text()).slice(0,250) }, { status: 502 });
+  return NextResponse.json({ ok: true });
+}
