@@ -5,7 +5,7 @@ import { StoreShell } from "@/components/store-shell";
 export const metadata: Metadata = {
   title: "Anavelle | Her adımda zarafet",
   description: "Anavelle kadın ayakkabı, sandalet ve terlik koleksiyonu. Konforu ve zarafeti bir araya getiren seçkin tasarımlar.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://anavelle.com")
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://anavelleshoes.netlify.app")
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
