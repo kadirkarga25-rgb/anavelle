@@ -14,7 +14,7 @@ import {
 type Section = "overview" | "products" | "media" | "orders" | "categories" | "content" | "settings";
 type DemoOrder = { id: string; customer: string; email: string; total: number; status: string; createdAt: string; itemCount: number };
 type StoreSettings = { storeName: string; supportEmail: string; phone: string; announcement: string; heroTitle: string; heroSubtitle: string; heroImage: string; seoTitle: string; seoDescription: string; currency: string; freeShippingThreshold: string };
-const defaultSettings: StoreSettings = { storeName: "ANAVELLE", supportEmail: "", phone: "", announcement: "Yeni sezonu keşfet", heroTitle: "Her adımda\\ndaha iyi bir sen.", heroSubtitle: "Zamansız çizgiler, özenli detaylar ve kendi ritmine uyum sağlayan stil.", heroImage: "", seoTitle: "Anavelle | Her adımda zarafet", seoDescription: "Anavelle kadın ayakkabı, sandalet ve terlik koleksiyonu.", currency: "TRY", freeShippingThreshold: "" };
+const defaultSettings: StoreSettings = { storeName: "ANAVELLE", supportEmail: "", phone: "", announcement: "Yeni sezonu keşfet", heroTitle: "Her adımda\ndaha iyi bir sen.", heroSubtitle: "Zamansız çizgiler, özenli detaylar ve kendi ritmine uyum sağlayan stil.", heroImage: "", seoTitle: "Anavelle | Her adımda zarafet", seoDescription: "Anavelle kadın ayakkabı, sandalet ve terlik koleksiyonu.", currency: "TRY", freeShippingThreshold: "" };
 const sections: { id: Section; label: string; group: string; icon: typeof LayoutDashboard }[] = [
   { id: "overview", label: "Genel bakış", group: "MAĞAZA", icon: LayoutDashboard },
   { id: "products", label: "Ürünler", group: "KATALOG", icon: Package },
