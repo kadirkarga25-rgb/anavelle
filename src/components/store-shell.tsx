@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Search, UserRound, ShoppingBag, Heart, Menu, X, ChevronUp, Truck, ShieldCheck, RefreshCw, Headphones, MessageCircle, ArrowRight } from "lucide-react";
+import { Search, UserRound, ShoppingBag, Heart, Menu, X, ChevronUp, Truck, ShieldCheck, RefreshCw, Headphones, MessageCircle, ArrowRight, GitCompareArrows } from "lucide-react";
 
 const navItems = [
   { label: "KADIN", href: "/kategori/kadin" },
@@ -70,12 +70,12 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
         <div className="actions">
           <form className="header-search" action="/arama"><input className="search" aria-label="Ürün ara" name="q" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ürün ara..." /><button aria-label="Ara" type="submit"><Search size={18} /></button></form>
           <Link aria-label="Hesabım" href="/hesabim"><UserRound size={19} /></Link>
-          <Link aria-label="Favorilerim" href="/favoriler"><Heart size={19} /></Link>
+          <Link aria-label="Favorilerim" href="/favoriler"><Heart size={19} /></Link>\n          <Link aria-label="Ürün karşılaştırma" href="/karsilastir"><GitCompareArrows size={18} /></Link>
           <Link className="cart-link" aria-label="Sepetim" href="/sepet"><ShoppingBag size={19} /><span>{count}</span></Link>
         </div>
       </div>
       {menuOpen && <div className="mobile-menu"><div className="mobile-menu-inner">{navItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}<ArrowRight size={15} /></Link>)}<Link href="/siparis-takip" onClick={() => setMenuOpen(false)}>SİPARİŞ TAKİBİ<ArrowRight size={15} /></Link><Link href="/iletisim" onClick={() => setMenuOpen(false)}>İLETİŞİM<ArrowRight size={15} /></Link></div></div>}
-      <div className="category-ribbon"><div className="container">{navItems.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}<Link href="/siparis-takip">SİPARİŞ TAKİBİ</Link></div></div>
+      <div className="category-ribbon"><div className="container">{navItems.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}<Link href="/siparis-takip">SİPARİŞ TAKİBİ</Link><Link href="/karsilastir">KARŞILAŞTIR</Link></div></div>
     </header>
 
     <main>{children}</main>
@@ -85,7 +85,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
     <footer className="footer"><div className="container"><div className="footer-grid">
       <div><Link className="brand footer-brand" href="/">ANA<em>VELLE</em><small>TIMELESS COMFORT</small></Link><p>Zarafetin konforla buluştuğu yer.<br />Her adımda kendine daha yakın.</p><p className="footer-note">Bağımsız bir marka deneyimi · Anavelle</p></div>
       <div><h3>KOLEKSİYON</h3><Link href="/kategori/kadin">Kadın</Link><Link href="/kategori/sandalet">Sandalet</Link><Link href="/kategori/terlik">Terlik</Link><Link href="/kategori/bot">Bot</Link><Link href="/kategori/outlet">Outlet</Link></div>
-      <div><h3>YARDIM</h3><Link href="/siparis-takip">Sipariş takibi</Link><Link href="/hesabim">Hesabım</Link><Link href="/iade-degisim">İade ve değişim</Link><Link href="/iletisim">İletişim</Link></div>
+      <div><h3>YARDIM</h3><Link href="/siparis-takip">Sipariş takibi</Link><Link href="/hesabim">Hesabım</Link><Link href="/iade-degisim">İade ve değişim</Link><Link href="/karsilastir">Ürün karşılaştırma</Link><Link href="/iletisim">İletişim</Link></div>
       <div><h3>ALIŞVERİŞ BİLGİLERİ</h3><p><ShieldCheck size={15} /> Güvenli alışveriş altyapısı hazırlanıyor</p><p><Truck size={15} /> Teslimat bilgileri</p><p><RefreshCw size={15} /> İade bilgilendirmesi</p><p><Headphones size={15} /> Müşteri desteği</p></div>
     </div><div className="footer-bottom"><span>© {new Date().getFullYear()} Anavelle. Tüm hakları saklıdır.</span><span>Bu sürümde gerçek ödeme ve sipariş servisi etkin değildir.</span><Link href="/iade-degisim">Alışveriş koşulları</Link></div></div></footer>
 
