@@ -8,16 +8,22 @@ import { getAdminCatalog } from "@/lib/admin-catalog";
 import { CatalogImage } from "@/components/catalog-image";
 
 export default function ComparePage() {
-  const [ids, setIds] = useState<string[]>([]);\n  const [catalog, setCatalog] = useState<Product[]>(products);
+  const [ids, setIds] = useState<string[]>([]);
+  const [catalog, setCatalog] = useState<Product[]>(products);
   useEffect(() => {
     const sync = () => {
       try { setIds(JSON.parse(localStorage.getItem("anavelle-compare") || "[]") as string[]); } catch { setIds([]); }
     };
     sync();
+    setCatalog(getAdminCatalog());
+    const syncCatalog = () => setCatalog(getAdminCatalog());
+    window.addEventListener("anavelle-admin-catalog-updated", syncCatalog);
     window.addEventListener("anavelle-compare-updated", sync);
     window.addEventListener("storage", sync);
     return () => {
-      window.removeEventListener("anavelle-compare-updated", sync);\n      window.removeEventListener("anavelle-admin-catalog-updated", syncCatalog);
+      window.removeEventListener("anavelle-compare-updated", sync);
+      window.removeEventListener("anavelle-admin-catalog-updated", syncCatalog);
+      window.removeEventListener("anavelle-admin-catalog-updated", syncCatalog);
       window.removeEventListener("storage", sync);
     };
   }, []);
