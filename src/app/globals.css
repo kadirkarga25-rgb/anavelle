@@ -757,3 +757,6 @@ button{cursor:pointer}
 .admin-gallery-editor-item button:last-child{color:#a34d3c}
 .catalog-image-placeholder{display:block;background:linear-gradient(135deg,#f6f0e8,#ece2d6)}
 @media(max-width:650px){.product-gallery-thumbs button{width:58px;height:68px}.admin-gallery-editor-grid{grid-template-columns:1fr}}
+
+.admin-category-title a{font-size:9px;color:#a87931;text-decoration:underline;width:max-content;max-width:100%}
+.admin-icon-btn:disabled{opacity:.35;cursor:not-allowed}
