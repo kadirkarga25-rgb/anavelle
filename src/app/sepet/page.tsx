@@ -1,0 +1,13 @@
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { products, money } from "@/data/products";
+
+type CartItem = {id:string;size:number;qty:number};
+export default function CartPage() {
+ const [cart,setCart] = useState<CartItem[]>([]);
+ useEffect(()=>{try{setCart(JSON.parse(localStorage.getItem("anavelle-cart")||"[]"))}catch{}},[]);
+ function save(items:CartItem[]) { setCart(items); localStorage.setItem("anavelle-cart",JSON.stringify(items)); window.dispatchEvent(new Event("anavelle-cart-updated")); }
+ const total = cart.reduce((sum,item)=>sum+(products.find(p=>p.id===item.id)?.price||0)*item.qty,0);
+ return <section className="section container"><div className="kicker">ALIŞVERİŞİN</div><h1 style={{fontFamily:"Georgia,serif",fontSize:42,fontWeight:400}}>Sepetim</h1>{cart.length===0?<div className="panel"><p>Sepetinde henüz ürün yok.</p><Link className="button" href="/kategori/kadin">Alışverişe başla</Link></div>:<div className="layout-two"><div>{cart.map((item,i)=>{const p=products.find(x=>x.id===item.id);if(!p)return null;return <div key={item.id+"-"+item.size} style={{display:"flex",gap:18,padding:"18px 0",borderBottom:"1px solid #eee"}}><div className={"product-image "+p.tone} style={{width:95,flexShrink:0,aspectRatio:"3/4"}}/><div style={{flex:1}}><Link href={"/urun/"+p.id}><strong>{p.name}</strong></Link><p className="muted">Beden: {item.size}</p><p>{money(p.price)}</p><div style={{display:"flex",gap:10,alignItems:"center"}}><select aria-label="Adet" value={item.qty} onChange={e=>save(cart.map((x,j)=>i===j?{...x,qty:Number(e.target.value)}:x))}>{[1,2,3,4,5].map(n=><option key={n}>{n}</option>)}</select><button onClick={()=>save(cart.filter((_,j)=>j!==i))} style={{border:0,background:"none",textDecoration:"underline",fontSize:12}}>Kaldır</button></div></div></div>})}</div><aside className="panel"><h2 style={{fontFamily:"Georgia,serif",fontWeight:400}}>Sipariş özeti</h2><p className="muted">Ara toplam <strong style={{float:"right",color:"#24150F"}}>{money(total)}</strong></p><p className="muted">Kargo hesaplaması gerçek kargo entegrasyonu ile yapılacak.</p><hr style={{border:0,borderTop:"1px solid #ddd"}}/><p>Toplam <strong style={{float:"right"}}>{money(total)}</strong></p><button className="button" style={{width:"100%"}} onClick={()=>alert("Demo mağaza: gerçek sipariş/ödeme altyapısı henüz bağlı değil.")}>Ödemeye geç (demo)</button><p className="muted" style={{fontSize:11}}>Bu proje şu anda gerçek ödeme almaz.</p></aside></div>}</section>;
+}
