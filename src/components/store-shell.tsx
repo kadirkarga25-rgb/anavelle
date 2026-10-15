@@ -75,7 +75,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
           <Link className="cart-link" aria-label="Sepetim" href="/sepet"><ShoppingBag size={19} /><span>{count}</span></Link>
         </div>
       </div>
-      {menuOpen && <div className="mobile-menu"><div className="mobile-menu-inner">{navItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}<ArrowRight size={15} /></Link>)}<Link href="/siparis-takip" onClick={() => setMenuOpen(false)}>SİPARİŞ TAKİBİ<ArrowRight size={15} /></Link><Link href="/iletisim" onClick={() => setMenuOpen(false)}>İLETİŞİM<ArrowRight size={15} /></Link></div></div>}
+      {menuOpen && <div className="mobile-menu"><div className="mobile-menu-inner">{navItems.map((item) => <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}<ArrowRight size={15} /></Link>)}<Link href="/siparis-takip" onClick={() => setMenuOpen(false)}>SİPARİŞ TAKİBİ<ArrowRight size={15} /></Link><Link href="/iletisim" onClick={() => setMenuOpen(false)}>İLETİŞİM<ArrowRight size={15} /></Link><Link href="/yardim" onClick={() => setMenuOpen(false)}>YARDIM MERKEZİ<ArrowRight size={15} /></Link></div></div>}
       <div className="category-ribbon"><div className="container">{navItems.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}<Link href="/siparis-takip">SİPARİŞ TAKİBİ</Link><Link href="/karsilastir">KARŞILAŞTIR</Link></div></div>
     </header>
 
@@ -86,7 +86,7 @@ export function StoreShell({ children }: { children: React.ReactNode }) {
     <footer className="footer"><div className="container"><div className="footer-grid">
       <div><Link className="brand footer-brand" href="/">ANA<em>VELLE</em><small>TIMELESS COMFORT</small></Link><p>Zarafetin konforla buluştuğu yer.<br />Her adımda kendine daha yakın.</p><p className="footer-note">Bağımsız bir marka deneyimi · Anavelle</p></div>
       <div><h3>KOLEKSİYON</h3><Link href="/kategori/kadin">Kadın</Link><Link href="/kategori/sandalet">Sandalet</Link><Link href="/kategori/terlik">Terlik</Link><Link href="/kategori/bot">Bot</Link><Link href="/kategori/outlet">Outlet</Link></div>
-      <div><h3>YARDIM</h3><Link href="/siparis-takip">Sipariş takibi</Link><Link href="/hesabim">Hesabım</Link><Link href="/iade-degisim">İade ve değişim</Link><Link href="/karsilastir">Ürün karşılaştırma</Link><Link href="/iletisim">İletişim</Link></div>
+      <div><h3>YARDIM</h3><Link href="/siparis-takip">Sipariş takibi</Link><Link href="/hesabim">Hesabım</Link><Link href="/iade-degisim">İade ve değişim</Link><Link href="/karsilastir">Ürün karşılaştırma</Link><Link href="/yardim">Yardım merkezi / SSS</Link><Link href="/iletisim">İletişim</Link></div>
       <div><h3>ALIŞVERİŞ BİLGİLERİ</h3><p><ShieldCheck size={15} /> Güvenli alışveriş altyapısı hazırlanıyor</p><p><Truck size={15} /> Teslimat bilgileri</p><p><RefreshCw size={15} /> İade bilgilendirmesi</p><p><Headphones size={15} /> Müşteri desteği</p></div>
     </div><div className="footer-bottom"><span>© {new Date().getFullYear()} Anavelle. Tüm hakları saklıdır.</span><span>Bu sürümde gerçek ödeme ve sipariş servisi etkin değildir.</span><Link href="/iade-degisim">Alışveriş koşulları</Link></div></div></footer>
 
