@@ -12,3 +12,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Siparişler alınamadı." }, { status: 503 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  if (!verifyAdminSession(request)) return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+  let body: { id?: string; status?: string };
+  try { body = await request.json() as { id?: string; status?: string }; } catch { return NextResponse.json({ error: "Geçersiz JSON." }, { status: 400 }); }
+  const allowed = ["Yeni","Hazırlanıyor","Kargoda","Teslim edildi","İptal","İade"];
+  if (!body.id || body.id.startsWith("DEMO-") || !body.status || !allowed.includes(body.status)) return NextResponse.json({ error: "Sipariş veya durum geçerli değil." }, { status: 400 });
+  try {
+    await supabaseRequest("/rest/v1/anavelle_orders?id=eq." + encodeURIComponent(body.id), { method:"PATCH", headers:{Prefer:"return=minimal"}, body:JSON.stringify({status:body.status,updated_at:new Date().toISOString()}) });
+    return NextResponse.json({ok:true});
+  } catch(error) {
+    return NextResponse.json({error:error instanceof Error?error.message:"Sipariş durumu güncellenemedi."},{status:503});
+  }
+}
