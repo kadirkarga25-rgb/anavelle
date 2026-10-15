@@ -7,12 +7,14 @@ import { Heart, Truck, RefreshCw, ShieldCheck, Ruler, ChevronDown, Check, Share2
 import { products, money, Product } from "@/data/products";
 import { getAdminCatalog, hasAdminCatalogOverride, resolveProductImage } from "@/lib/admin-catalog";
 import { ProductCard } from "@/components/product-card";
+import { CatalogImage } from "@/components/catalog-image";
 
 export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [product, setProduct] = useState<Product | undefined>(() => products.find((item) => item.id === params.id));
   const [displayImage, setDisplayImage] = useState("");
+  const [selectedImageRef, setSelectedImageRef] = useState("");
   useEffect(() => {
     let active = true;
     let objectUrl = "";
@@ -20,6 +22,7 @@ export default function ProductDetailPage() {
       const apply = (found: Product | undefined) => {
         if (!found) { setProduct(undefined); return; }
         setProduct(found);
+        setSelectedImageRef(found.image);
         void resolveProductImage(found.image).then(src => {
           if (!active) { if (src.startsWith("blob:")) URL.revokeObjectURL(src); return; }
           if (src.startsWith("blob:")) objectUrl = src;
@@ -137,7 +140,8 @@ export default function ProductDetailPage() {
       <div className="breadcrumbs"><Link href="/">Anasayfa</Link><span>/</span><Link href={`/kategori/${activeProduct.category === "kadin" ? "kadin" : activeProduct.category}`}>{activeProduct.category === "kadin" ? "Kadın koleksiyonu" : activeProduct.category}</Link><span>/</span><span>{activeProduct.name}</span></div>
       <div className="product-detail-grid">
         <div className="product-gallery">
-          <div className="product-main-image"><img src={displayImage || activeProduct.image} alt={activeProduct.name} /><span className="gallery-label">ANAVELLE · {activeProduct.id.toUpperCase()}</span></div>
+          <div className="product-main-image"><CatalogImage image={displayImage || activeProduct.image} alt={activeProduct.name}/><span className="gallery-label">ANAVELLE · {activeProduct.id.toUpperCase()}</span></div>
+          {Array.from(new Set([activeProduct.image,...(activeProduct.gallery||[])].filter(Boolean))).length>1&&<div className="product-gallery-thumbs" aria-label="Ürün fotoğrafları">{Array.from(new Set([activeProduct.image,...(activeProduct.gallery||[])].filter(Boolean))).map((image,index)=><button key={image+"-"+index} type="button" className={selectedImageRef===image?"selected":""} onClick={()=>{setSelectedImageRef(image);setDisplayImage(image);}} aria-label={"Ürün fotoğrafı "+(index+1)}><CatalogImage image={image} alt={activeProduct.name+" fotoğraf "+(index+1)}/></button>)}</div>}
           <div className="gallery-caption"><span>Temsili katalog görseli · Gerçek ürün fotoğrafları eklenecek.</span><button onClick={shareProduct}><Share2 size={15}/> Paylaş</button></div>
           <div className="product-image-note"><ShieldCheck size={17}/><span>Ürün fotoğrafı, malzeme ve ölçüler gerçek katalogla doğrulanmadan kesin özellik olarak değerlendirilmemelidir.</span></div>
         </div>
